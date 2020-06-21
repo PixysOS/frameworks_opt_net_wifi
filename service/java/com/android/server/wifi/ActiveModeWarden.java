@@ -654,7 +654,4 @@ public class ActiveModeWarden {
             }
         }
     };
-
-    public void registerStaEventCallback() {}
-    public void unregisterStaEventCallback() {}
 }
