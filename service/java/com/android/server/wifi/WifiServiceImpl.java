@@ -65,6 +65,7 @@ import android.net.wifi.IDppCallback;
 import android.net.wifi.INetworkRequestMatchCallback;
 import android.net.wifi.IOnWifiUsabilityStatsListener;
 import android.net.wifi.ISoftApCallback;
+import android.net.wifi.ISuggestionConnectionStatusListener;
 import android.net.wifi.IStaStateCallback;
 import android.net.wifi.ITrafficStateCallback;
 import android.net.wifi.ScanResult;
@@ -3258,6 +3259,42 @@ public class WifiServiceImpl extends BaseWifiService {
                                                 int callbackIdentifier) {
         if (binder == null) {
             throw new IllegalArgumentException("Binder must not be null");
+        }
+        if (callback == null) {
+            throw new IllegalArgumentException("Callback must not be null");
+        }
+        if (mVerboseLoggingEnabled) {
+            mLog.info("registerStaStateCallback uid=%").c(Binder.getCallingUid()).flush();
+        }
+        mWifiThreadRunner.post(() ->
+            mWifiStaStateNotifier.addCallback(binder, callback, callbackIdentifier));
+    }
+
+    @Override
+    public void unregisterStaStateCallback(int callbackIdentifier) {
+        if (mVerboseLoggingEnabled) {
+            mLog.info("unregisterStaStateCallback uid=%").c(Binder.getCallingUid()).flush();
+        }
+        mWifiThreadRunner.post(() ->
+            mWifiStaStateNotifier.removeCallback(callbackIdentifier));
+    }
+
+    private long getSupportedFeaturesInternal() {
+        final AsyncChannel channel = mClientModeImplChannel;
+        long supportedFeatureSet = 0L;
+        if (channel != null) {
+            supportedFeatureSet = mClientModeImpl.syncGetSupportedFeatures(channel);
+        } else {
+            Log.e(TAG, "mClientModeImplChannel is not initialized");
+            return supportedFeatureSet;
+        }
+        // Mask the feature set against system properties.
+        boolean rttSupported = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_WIFI_RTT);
+        if (!rttSupported) {
+            // flags filled in by vendor HAL, remove if overlay disables it.
+            supportedFeatureSet &=
+                    ~(WifiManager.WIFI_FEATURE_D2D_RTT | WifiManager.WIFI_FEATURE_D2AP_RTT);
         }
         if (callback == null) {
             throw new IllegalArgumentException("Callback must not be null");

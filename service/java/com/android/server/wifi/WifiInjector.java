@@ -358,6 +358,8 @@ public class WifiInjector {
         mWifiNetworkSelector.registerNetworkEvaluator(mCarrierNetworkEvaluator);
         mWifiNetworkSelector.registerNetworkEvaluator(mScoredNetworkEvaluator);
 
+        mWifiStaStateNotifier = new WifiStaStateNotifier(wifiLooper, this);
+
         mClientModeImpl.start();
     }
 
